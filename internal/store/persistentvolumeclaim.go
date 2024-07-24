@@ -173,6 +173,26 @@ func persistentVolumeClaimMetricFamilies(allowAnnotationsList, allowLabelsList [
 			}),
 		),
 		*generator.NewFamilyGeneratorWithStability(
+			"kube_persistentvolumeclaim_resource_used_storage_bytes",
+			"The capacity of storage currently used by the persistent volume claim.",
+			metric.Gauge,
+			basemetrics.ALPHA,
+			"",
+			wrapPersistentVolumeClaimFunc(func(p *v1.PersistentVolumeClaim) *metric.Family {
+				ms := []*metric.Metric{}
+
+				if storage, ok := p.Status.Capacity[v1.ResourceStorage]; ok && p.Status.Phase == v1.ClaimBound {
+					ms = append(ms, &metric.Metric{
+						Value: float64(storage.Value()),
+					})
+				}
+
+				return &metric.Family{
+					Metrics: ms,
+				}
+			}),
+		),
+		*generator.NewFamilyGeneratorWithStability(
 			"kube_persistentvolumeclaim_access_mode",
 			"The access mode(s) specified by the persistent volume claim.",
 			metric.Gauge,
